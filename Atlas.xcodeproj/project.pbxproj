@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		4F58CB3C2DA0EC4000ED7A96 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 4F58CB3B2DA0EC4000ED7A96 /* FirebaseAnalytics */; };
+		4F58CB3E2DA0EC4000ED7A96 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 4F58CB3D2DA0EC4000ED7A96 /* FirebaseAuth */; };
+		4F58CB402DA0EC4000ED7A96 /* FirebaseAuthCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 4F58CB3F2DA0EC4000ED7A96 /* FirebaseAuthCombine-Community */; };
+		4F58CB422DA0EC4000ED7A96 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 4F58CB412DA0EC4000ED7A96 /* FirebaseCore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		4F58CB252DA0DE1800ED7A96 /* Atlas.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Atlas.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +30,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4F58CB3C2DA0EC4000ED7A96 /* FirebaseAnalytics in Frameworks */,
+				4F58CB402DA0EC4000ED7A96 /* FirebaseAuthCombine-Community in Frameworks */,
+				4F58CB422DA0EC4000ED7A96 /* FirebaseCore in Frameworks */,
+				4F58CB3E2DA0EC4000ED7A96 /* FirebaseAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +76,10 @@
 			);
 			name = Atlas;
 			packageProductDependencies = (
+				4F58CB3B2DA0EC4000ED7A96 /* FirebaseAnalytics */,
+				4F58CB3D2DA0EC4000ED7A96 /* FirebaseAuth */,
+				4F58CB3F2DA0EC4000ED7A96 /* FirebaseAuthCombine-Community */,
+				4F58CB412DA0EC4000ED7A96 /* FirebaseCore */,
 			);
 			productName = Atlas;
 			productReference = 4F58CB252DA0DE1800ED7A96 /* Atlas.app */;
@@ -94,6 +109,9 @@
 			);
 			mainGroup = 4F58CB1C2DA0DE1800ED7A96;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4F58CB3A2DA0EC4000ED7A96 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4F58CB262DA0DE1800ED7A96 /* Products */;
 			projectDirPath = "";
@@ -324,6 +342,40 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4F58CB3A2DA0EC4000ED7A96 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.11.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4F58CB3B2DA0EC4000ED7A96 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4F58CB3A2DA0EC4000ED7A96 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		4F58CB3D2DA0EC4000ED7A96 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4F58CB3A2DA0EC4000ED7A96 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		4F58CB3F2DA0EC4000ED7A96 /* FirebaseAuthCombine-Community */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4F58CB3A2DA0EC4000ED7A96 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = "FirebaseAuthCombine-Community";
+		};
+		4F58CB412DA0EC4000ED7A96 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4F58CB3A2DA0EC4000ED7A96 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 4F58CB1D2DA0DE1800ED7A96 /* Project object */;
 }
