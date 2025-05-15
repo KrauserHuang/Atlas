@@ -40,6 +40,8 @@ struct AuthenticatedView<Content, Unauthenticated>: View where Content: View, Un
     }
 }
 
-//#Preview {
-//    AuthenticatedView()
-//}
+#Preview {
+    AuthenticatedView {
+        Text("You are signed in.")
+    }
+}
