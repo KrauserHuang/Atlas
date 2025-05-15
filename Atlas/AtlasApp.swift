@@ -19,10 +19,17 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 struct AtlasApp: App {
     
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+//    @StateObject var authViewModel = AuthenticationViewModel()
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationView {
+                AuthenticatedView {
+                    Text("HI")
+                }
+//                .environmentObject(authViewModel)
+                    
+            }
         }
     }
 }
