@@ -15,7 +15,6 @@ struct LoginView: View {
     
     @FocusState private var focusedField: Field?
     @State private var isPasswordVisible = false
-    @State private var isSigningIn = false
     
     private enum Field: Hashable {
         case email, password
@@ -44,10 +43,10 @@ struct LoginView: View {
             .padding()
         }
         .scrollDismissesKeyboard(.interactively)
-        .disabled(isSigningIn)
+        .disabled(viewModel.authenticationState == .authenticating)
         .overlay(
             Group {
-                if isSigningIn {
+                if viewModel.authenticationState == .authenticating {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle())
                         .scaleEffect(1.5)
@@ -150,7 +149,7 @@ extension LoginView {
     private var signInButton: some View {
         Button(action: signInWithEmailPassword) {
             HStack {
-                if isSigningIn {
+                if viewModel.authenticationState == .authenticating {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
@@ -166,6 +165,7 @@ extension LoginView {
             .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
         }
         .padding(.top, 8)
+        .disabled(!viewModel.isValid)
     }
     
     private var dividerView: some View {
@@ -242,19 +242,10 @@ extension LoginView {
     }
     
     private func signInWithEmailPassword() {
-        guard !isSigningIn else { return }
-        
-        isSigningIn = true
+        guard viewModel.authenticationState != .authenticating else { return }
         
         Task {
-            defer { isSigningIn = false }
-            
-            if await viewModel.signInWithEmailPassword() {
-                print("Login successful")
-                // Handle successful login (e.g., dismiss view)
-            } else {
-                // Show error (handled by view model)
-            }
+            await viewModel.signInWithEmailPassword()
         }
     }
     
