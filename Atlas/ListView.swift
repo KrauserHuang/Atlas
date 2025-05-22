@@ -9,10 +9,15 @@ import SwiftUI
 
 struct ListView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationView {
+            List(1...20, id: \.self) { item in
+                Text("Item \(item)")
+            }
+            .navigationTitle("List")
+        }
     }
 }
 
-#Preview {
-    ListView()
-}
+//#Preview {
+//    ListView()
+//}
