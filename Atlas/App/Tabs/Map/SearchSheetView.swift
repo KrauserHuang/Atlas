@@ -10,6 +10,7 @@ import SwiftUI
 
 struct SearchSheetView: View {
     
+    @State private var locationService = LocationService(completer: .init())
     @Binding var query: String
     @Binding var isSearching: Bool
     
@@ -18,6 +19,25 @@ struct SearchSheetView: View {
             SearchBarView(searchText: $query, isSearching: $isSearching)
             
             Spacer()
+            
+            List {
+                ForEach(locationService.completions) { completion in
+                    Button(action: {}) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(completion.title)
+                                .font(.headline)
+                                .fontDesign(.rounded)
+                            Text(completion.subTitle)
+                        }
+                    }
+                    .listRowBackground(Color.clear)
+                }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+        }
+        .onChange(of: query) {
+            locationService.update(queryFragment: query)
         }
         .padding()
         .interactiveDismissDisabled()
@@ -27,6 +47,6 @@ struct SearchSheetView: View {
     }
 }
 
-#Preview("SearchSheetView", traits: .sizeThatFitsLayout) {
-    SearchSheetView(query: .constant("1"), isSearching: .constant(true))
-}
+//#Preview("SearchSheetView", traits: .sizeThatFitsLayout) {
+//    SearchSheetView(query: .constant("1"), isSearching: .constant(true))
+//}
