@@ -37,6 +37,7 @@ struct MapTab: View {
     @State private var selectedMapItem: MKMapItem?
     @State private var searchResults: [SearchResult] = []
     @State private var selectedLocation: SearchResult?
+    @State private var scene: MKLookAroundScene?
     // 地圖範圍命名空間，用於控制地圖相關的 UI 元件
     @Namespace var mapScope
     
@@ -92,8 +93,22 @@ struct MapTab: View {
                     .tag(result)
                 }
             }
+            .overlay(alignment: .bottom) {
+                if selectedLocation != nil {
+                    LookAroundPreview(scene: $scene, allowsNavigation: false, badgePosition: .bottomTrailing)
+                        .frame(height: 150)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .safeAreaPadding(.bottom, 40)
+                        .padding(.horizontal, 20)
+                }
+            }
             .ignoresSafeArea()
             .onChange(of: selectedLocation) {
+                if let selectedLocation {
+                    Task {
+                        scene = try? await fetchScene(for: selectedLocation.location)
+                    }
+                }
                 // 沒有選中位置，則顯示搜尋面板
                 isSheetPresented = selectedLocation == nil
             }
@@ -107,6 +122,11 @@ struct MapTab: View {
                 SearchSheetView(query: $query, isSearching: $isSearching, searchResults: $searchResults)
             }
         }
+    }
+    
+    private func fetchScene(for coordinate: CLLocationCoordinate2D) async throws -> MKLookAroundScene? {
+        let lookAroundScene = MKLookAroundSceneRequest(coordinate: coordinate)
+        return try await lookAroundScene.scene
     }
 }
 
