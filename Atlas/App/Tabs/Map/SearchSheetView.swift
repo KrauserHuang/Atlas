@@ -28,6 +28,11 @@ struct SearchSheetView: View {
                                 .font(.headline)
                                 .fontDesign(.rounded)
                             Text(completion.subTitle)
+                            
+                            if let url = completion.url {
+                                Link(url.absoluteString, destination: url)
+                                    .lineLimit(1)
+                            }
                         }
                     }
                     .listRowBackground(Color.clear)
