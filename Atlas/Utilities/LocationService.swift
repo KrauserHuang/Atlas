@@ -7,12 +7,26 @@
 
 import MapKit
 
-/// 儲存搜尋結果的model
+/// 儲存搜尋自動完成建議結果的model
 struct SearchCompletions: Identifiable {
     let id = UUID()
     let title: String
     let subTitle: String
     var url: URL?
+}
+
+/// 搜尋結果的model
+struct SearchResult: Identifiable, Hashable {
+    let id = UUID()
+    let location: CLLocationCoordinate2D
+    
+    static func == (lhs: SearchResult, rhs: SearchResult) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
 
 @Observable
@@ -35,6 +49,29 @@ class LocationService: NSObject {
     func update(queryFragment: String) {
         completer.resultTypes = .pointOfInterest
         completer.queryFragment = queryFragment
+    }
+    
+    /// 執行位置搜尋
+    /// - Parameters:
+    ///   - query: 搜尋查詢字串
+    ///   - coordinate: 可選的搜尋中心座標，用於限制搜尋範圍
+    /// - Returns: 回傳搜尋結果model
+    func search(with query: String, coordinate: CLLocationCoordinate2D? = nil) async throws -> [SearchResult] {
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = query
+        request.resultTypes = .pointOfInterest
+        if let coordinate {
+            request.region = .init(.init(origin: .init(coordinate), size: .init(width: 1, height: 1)))
+        }
+        
+        let search = MKLocalSearch(request: request)
+        
+        let response = try await search.start()
+        
+        return response.mapItems.compactMap { mapItem in
+            guard let location = mapItem.placemark.location?.coordinate else { return nil }
+            return .init(location: location)
+        }
     }
 }
 

@@ -18,8 +18,8 @@ struct SearchBarView: View {
                 .foregroundStyle(.secondary)
             
             TextField("Search a location...", text: $searchText)
-                .keyboardType(.asciiCapable)
-                .autocorrectionDisabled()
+                .keyboardType(.asciiCapable)        // 設定鍵盤類型為 ASCII 字符
+                .autocorrectionDisabled()           // 關閉自動校正功能
                 .overlay(alignment: .trailing) {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(searchText.isEmpty ? .clear : .secondary)

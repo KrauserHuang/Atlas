@@ -13,16 +13,22 @@ struct SearchSheetView: View {
     @State private var locationService = LocationService(completer: .init())
     @Binding var query: String
     @Binding var isSearching: Bool
+    @Binding var searchResults: [SearchResult]
     
     var body: some View {
         VStack {
             SearchBarView(searchText: $query, isSearching: $isSearching)
+                .onSubmit {
+                    Task {
+                        searchResults = try await locationService.search(with: query)
+                    }
+                }
             
             Spacer()
             
             List {
                 ForEach(locationService.completions) { completion in
-                    Button(action: {}) {
+                    Button(action: { didTapOnCompletion(completion) }) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(completion.title)
                                 .font(.headline)
@@ -39,16 +45,27 @@ struct SearchSheetView: View {
                 }
             }
             .listStyle(.plain)
-            .scrollContentBackground(.hidden)
+            .scrollContentBackground(.hidden)   // 隱藏列表背景
         }
         .onChange(of: query) {
+            // 當搜尋文字 query 改變，觸發自動更新建議
             locationService.update(queryFragment: query)
         }
         .padding()
-        .interactiveDismissDisabled()
-        .presentationDetents([.height(200), .large])
+        .interactiveDismissDisabled()                   // 禁止用手勢關閉列表
+        .presentationDetents([.height(200), .large])    // 列表面板高度設定：高度200/大尺寸
         .presentationBackground(.regularMaterial)
-        .presentationBackgroundInteraction(.enabled(upThrough: .large))
+        .presentationBackgroundInteraction(.enabled(upThrough: .large)) // 允許背景互動
+    }
+    
+    /// 處理用戶點擊搜尋建議項目
+    /// - Parameter completion: 被點擊的搜尋建議項目
+    private func didTapOnCompletion(_ completion: SearchCompletions) {
+        Task {
+            if let singleLocation = try? await locationService.search(with: "\(completion.title) \(completion.subTitle)").first {
+                searchResults = [singleLocation]
+            }
+        }
     }
 }
 
