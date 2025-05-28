@@ -87,10 +87,8 @@ struct MapTab: View {
             
             Map(position: $position, selection: $selectedLocation) {
                 ForEach(searchResults) { result in
-                    Marker(coordinate: result.location) {
-                        Image(systemName: "mappin")
-                    }
-                    .tag(result)
+                    Marker(result.name, coordinate: result.location)
+                        .tag(result)
                 }
             }
             .overlay(alignment: .bottom) {

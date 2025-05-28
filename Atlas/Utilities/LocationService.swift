@@ -18,7 +18,15 @@ struct SearchCompletions: Identifiable {
 /// 搜尋結果的model
 struct SearchResult: Identifiable, Hashable {
     let id = UUID()
-    let location: CLLocationCoordinate2D
+    let mapItem: MKMapItem
+    
+    var location: CLLocationCoordinate2D {
+        return mapItem.placemark.coordinate
+    }
+    
+    var name: String {
+        return mapItem.name ?? ""
+    }
     
     static func == (lhs: SearchResult, rhs: SearchResult) -> Bool {
         lhs.id == rhs.id
@@ -68,9 +76,8 @@ class LocationService: NSObject {
         
         let response = try await search.start()
         
-        return response.mapItems.compactMap { mapItem in
-            guard let location = mapItem.placemark.location?.coordinate else { return nil }
-            return .init(location: location)
+        return response.mapItems.map { mapItem in
+            return SearchResult(mapItem: mapItem)
         }
     }
 }

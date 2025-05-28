@@ -32,16 +32,31 @@ struct SearchSheetView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(completion.title)
                                 .font(.headline)
+                                .foregroundStyle(.primary)
                                 .fontDesign(.rounded)
+                            
                             Text(completion.subTitle)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                             
                             if let url = completion.url {
-                                Link(url.absoluteString, destination: url)
+                                Link(destination: url) {
+                                    HStack {
+                                        Image(systemName: "link")
+                                        Text(url.absoluteString)
+                                    }
+                                    .font(.caption)
                                     .lineLimit(1)
+                                    .foregroundStyle(.blue)
+                                }
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                     .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 }
             }
             .listStyle(.plain)
