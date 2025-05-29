@@ -42,6 +42,21 @@ struct MapTab: View {
     // 地圖範圍命名空間，用於控制地圖相關的 UI 元件
     @Namespace var mapScope
     
+    // Computed binding to convert SearchResult to MKMapItem
+    private var selectedMapItemBinding: Binding<MKMapItem?> {
+        Binding(
+            get: { selectedLocation?.mapItem },
+            set: { newMapItem in
+                if let newMapItem = newMapItem {
+                    // Find the SearchResult that corresponds to this MKMapItem
+                    selectedLocation = searchResults.first { $0.mapItem == newMapItem }
+                } else {
+                    selectedLocation = nil
+                }
+            }
+        )
+    }
+    
     var body: some View {
         ZStack {
             Map(position: $position, selection: $selectedLocation, scope: mapScope) {
@@ -77,15 +92,15 @@ struct MapTab: View {
                 .buttonBorderShape(.roundedRectangle)
             }
             .mapScope(mapScope)
-            .overlay(alignment: .bottom) {
-                if selectedLocation != nil {
-                    LookAroundPreview(scene: $scene, allowsNavigation: true, badgePosition: .bottomTrailing)
-                        .frame(height: 150)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .safeAreaPadding(.bottom, 40)
-                        .padding(.horizontal, 20)
-                }
-            }
+//            .overlay(alignment: .bottom) {
+//                if selectedLocation != nil {
+//                    LookAroundPreview(scene: $scene, allowsNavigation: true, badgePosition: .bottomTrailing)
+//                        .frame(height: 150)
+//                        .clipShape(RoundedRectangle(cornerRadius: 12))
+//                        .safeAreaPadding(.bottom, 40)
+//                        .padding(.horizontal, 20)
+//                }
+//            }
             .onChange(of: selectedLocation) {
                 if let selectedLocation {
                     Task {
@@ -104,6 +119,7 @@ struct MapTab: View {
             .sheet(isPresented: $isSheetPresented) {
                 SearchSheetView(query: $query, isSearching: $isSearching, searchResults: $searchResults)
             }
+            .mapItemDetailSheet(item: selectedMapItemBinding)
         }
     }
     

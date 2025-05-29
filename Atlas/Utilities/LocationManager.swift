@@ -34,6 +34,36 @@ enum LocationError: LocalizedError {
     }
 }
 
+/// 儲存搜尋自動完成建議結果的model
+struct SearchCompletion: Identifiable {
+    let id = UUID()
+    let title: String
+    let subTitle: String
+    var url: URL?
+}
+
+/// 搜尋結果的model
+struct SearchResult: Identifiable, Hashable {
+    let id = UUID()
+    let mapItem: MKMapItem
+    
+    var location: CLLocationCoordinate2D {
+        return mapItem.placemark.coordinate
+    }
+    
+    var name: String {
+        return mapItem.name ?? ""
+    }
+    
+    static func == (lhs: SearchResult, rhs: SearchResult) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
 /// This macro adds observation support to a custom type and conforms the type to the `Observable` protocol.
 /// - 遵從`ObservableObject`協定 → 自動加上`objectWillChange Publisher`
 /// - 所有屬性自動套上等同於`@Published`的行為（原先使用ObservableObject協定，要先import Combine/標記 @Published，若有自訂setter，還要呼叫objectWillChange.send()）
@@ -44,15 +74,111 @@ final class LocationManager: NSObject {
     
     let manager: CLLocationManager = CLLocationManager()
     var region: MKCoordinateRegion = MKCoordinateRegion()
+    var location: CLLocationCoordinate2D? = nil
+    var name: String = ""
     var error: LocationError? = nil
+    
+    var query: String = ""
+    var searchResults: [SearchResult] = []
+    var completions: [SearchCompletion] = []
+    let searchCompleter = MKLocalSearchCompleter()
     
     override init() {
         super.init()
+        // 初始化 CLLocationManager
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
+        // 初始化 MKLocalSearchCompleter
+        searchCompleter.delegate = self
+        searchCompleter.resultTypes = .pointOfInterest
+    }
+    
+    /// 執行位置搜尋
+    /// - Parameters:
+    ///   - query: 搜尋的字串
+    ///   - useCurrentLocation: 是否依目前位置當作座標中心進行搜尋
+    /// - Returns: 回傳搜尋結果
+    func performSearch(with query: String, useCurrentLocation: Bool = true) async throws -> [SearchResult] {
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = query
+        request.resultTypes = .pointOfInterest
+        
+        if useCurrentLocation {
+            if let location {
+                request.region = MKCoordinateRegion(
+                    center: location,
+                    span: MKCoordinateSpan(latitudeDelta: 0.0125, longitudeDelta: 0.0125)
+                )
+            } else if region.center.latitude != 0 && region.center.longitude != 0 {
+                request.region = region
+            }
+        }
+        
+        let search = MKLocalSearch(request: request)
+        let response = try await search.start()
+        
+        let results = response.mapItems.map { SearchResult(mapItem: $0) }
+        
+        await MainActor.run {
+            self.searchResults = results
+        }
+        
+        return results
+    }
+    
+    func updateSearchCompletions(queryFragment: String) {
+        query = queryFragment
+        if queryFragment.isEmpty {
+            completions = []
+        } else {
+            searchCompleter.queryFragment = queryFragment
+        }
+    }
+    
+    func searchFromCompletion(_ completion: SearchCompletion) async throws -> [SearchResult] {
+        return try await performSearch(with: completion.title)
+    }
+    
+    func clearSearchResults() {
+        searchResults = []
+        completions = []
+        query = ""
+        searchCompleter.queryFragment = ""
+    }
+    
+    /// Get directions between two locations
+    /// - Parameters:
+    ///   - from: Starting location (nil for current location)
+    ///   - to: Destination location
+    /// - Returns: MKRoute object with directions
+    func getDirections(from: CLLocationCoordinate2D? = nil, to: CLLocationCoordinate2D) async throws -> MKRoute {
+        let request = MKDirections.Request()
+        
+        // Set source
+        if let fromLocation = from {
+            request.source = MKMapItem(placemark: MKPlacemark(coordinate: fromLocation))
+        } else if let currentLocation = location {
+            request.source = MKMapItem(placemark: MKPlacemark(coordinate: currentLocation))
+        } else {
+            request.source = MKMapItem.forCurrentLocation()
+        }
+        
+        // Set destination
+        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: to))
+        request.transportType = .automobile
+        
+        let directions = MKDirections(request: request)
+        let response = try await directions.calculate()
+        
+        guard let route = response.routes.first else {
+            throw LocationError.operationFailed
+        }
+        
+        return route
     }
 }
 
+// MARK: - CLLocationManagerDelegate
 extension LocationManager: CLLocationManagerDelegate {
     /// 任何時候只要authorizationStatus改變就會呼叫這個方法
     /// - Parameter manager: 傳遞位置相關資訊的物件
@@ -106,5 +232,28 @@ extension LocationManager: CLLocationManagerDelegate {
                 self.error = .operationFailed
             }
         }
+    }
+}
+
+// MARK: - MKLocalSearchCompleterDelegate
+extension LocationManager: MKLocalSearchCompleterDelegate {
+    /// 當`completer`完成更新結果時呼叫
+    /// - Parameter completer: 完成器的實體物件
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        completions = completer.results.map { completion in
+            // 使用 Key-Value Coding(KVC) 取得私有屬性 "_mapItem"
+            // ‼️ 這是存取 Apple 私有 API 的方式，可能未來版本失效、在 App Store 審查中可能會被拒絕
+            let mapItem = completion.value(forKey: "_mapItem") as? MKMapItem
+            
+            return .init(
+                title: completion.title,
+                subTitle: completion.subtitle,
+                url: mapItem?.url
+            )
+        }
+    }
+    
+    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: any Error) {
+        print("Search completer failed: \(error.localizedDescription)")
     }
 }

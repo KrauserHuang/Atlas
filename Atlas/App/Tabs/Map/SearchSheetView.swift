@@ -9,25 +9,32 @@ import MapKit
 import SwiftUI
 
 struct SearchSheetView: View {
-    
-    @State private var locationService = LocationService(completer: .init())
     @Binding var query: String
     @Binding var isSearching: Bool
     @Binding var searchResults: [SearchResult]
+    
+    private let locationManager = LocationManager.shared
     
     var body: some View {
         VStack {
             SearchBarView(searchText: $query, isSearching: $isSearching)
                 .onSubmit {
                     Task {
-                        searchResults = try await locationService.search(with: query)
+                        do {
+                            let results = try await locationManager.performSearch(with: query)
+                            await MainActor.run {
+                                searchResults = results
+                            }
+                        } catch {
+                            print("Search failed: \(error)")
+                        }
                     }
                 }
             
             Spacer()
             
             List {
-                ForEach(locationService.completions) { completion in
+                ForEach(locationManager.completions) { completion in
                     Button(action: { didTapOnCompletion(completion) }) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(completion.title)
@@ -62,9 +69,10 @@ struct SearchSheetView: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)   // 隱藏列表背景
         }
-        .onChange(of: query) {
+        .onChange(of: query) { _, newQuery in
             // 當搜尋文字 query 改變，觸發自動更新建議
-            locationService.update(queryFragment: query)
+            locationManager.query = newQuery
+            locationManager.updateSearchCompletions(queryFragment: newQuery)
         }
         .padding()
         .interactiveDismissDisabled()                   // 禁止用手勢關閉列表
@@ -75,10 +83,10 @@ struct SearchSheetView: View {
     
     /// 處理用戶點擊搜尋建議項目
     /// - Parameter completion: 被點擊的搜尋建議項目
-    private func didTapOnCompletion(_ completion: SearchCompletions) {
+    private func didTapOnCompletion(_ completion: SearchCompletion) {
         Task {
-            if let singleLocation = try? await locationService.search(with: "\(completion.title) \(completion.subTitle)").first {
-                searchResults = [singleLocation]
+            if let singleLocation = try? await locationManager.searchFromCompletion(completion) {
+                searchResults = singleLocation
             }
         }
     }
