@@ -115,6 +115,7 @@ struct MapTab: View {
                 }
                 // 沒有選中位置，則顯示搜尋面板
                 isSheetPresented = selectedLocation == nil
+                printPlacemarkInfo()
             }
             .onChange(of: searchResults) {
                 // 如果只有一個搜尋結果，則自動選中
@@ -140,6 +141,34 @@ struct MapTab: View {
     private func fetchScene(for coordinate: CLLocationCoordinate2D) async throws -> MKLookAroundScene? {
         let lookAroundScene = MKLookAroundSceneRequest(coordinate: coordinate)
         return try await lookAroundScene.scene
+    }
+    
+    private func printPlacemarkInfo() {
+        guard let placemark = selectedLocation?.mapItem.placemark else { return }
+        
+        // Print all available placemark information
+        print("=== Placemark Information ===")
+        print("Name: \(placemark.name ?? "N/A")")
+        print("Title: \(placemark.title ?? "N/A")")
+        print("Thoroughfare (Street): \(placemark.thoroughfare ?? "N/A")")
+        print("SubThoroughfare (Street Number): \(placemark.subThoroughfare ?? "N/A")")
+        print("Locality (City): \(placemark.locality ?? "N/A")")
+        print("SubLocality: \(placemark.subLocality ?? "N/A")")
+        print("Administrative Area (State): \(placemark.administrativeArea ?? "N/A")")
+        print("SubAdministrative Area: \(placemark.subAdministrativeArea ?? "N/A")")
+        print("Postal Code: \(placemark.postalCode ?? "N/A")")
+        print("Country: \(placemark.country ?? "N/A")")
+        print("ISO Country Code: \(placemark.isoCountryCode ?? "N/A")")
+        print("Location: \(placemark.location?.coordinate.latitude ?? 0), \(placemark.location?.coordinate.longitude ?? 0)")
+        
+        // Print MKMapItem specific information
+        print("\n=== MapItem Information ===")
+        print("Phone Number: \(selectedLocation?.mapItem.phoneNumber ?? "N/A")")
+        print("URL: \(selectedLocation?.mapItem.url?.absoluteString ?? "N/A")")
+        print("Point of Interest Category: \(selectedLocation?.mapItem.pointOfInterestCategory?.rawValue ?? "N/A")")
+        //        if let hours = selectedItem?.openingHours {
+        //            print("Opening Hours: \(hours)")
+        //        }
     }
 }
 
