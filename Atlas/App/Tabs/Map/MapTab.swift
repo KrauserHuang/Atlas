@@ -29,12 +29,9 @@ struct MapTab: View {
     @State private var locationManager = LocationManager.shared
     @State private var position: MapCameraPosition = .userLocation(fallback: .automatic)
     @State private var visibleRegion: MKCoordinateRegion?
-    @State private var isSheetPresented: Bool = true
     @State private var query: String = ""
     @State private var isSearching: Bool = false
-    // 搜尋結果，MKMapItem vs SearchResult
-    @State private var mapItems: [MKMapItem] = []
-    @State private var selectedMapItem: MKMapItem?
+    // 搜尋結果，SearchResult
     @State private var searchResults: [SearchResult] = []
     @State private var selectedLocation: SearchResult?
     // 街景場景
@@ -64,6 +61,7 @@ struct MapTab: View {
                     // 直接使用MKMapItem創建標記取得更多資訊
                     Marker(item: result.mapItem)
                         .tag(result)
+//                        .tag(MapSelection(result.mapItem))
                 }
                 UserAnnotation()
             }
@@ -114,7 +112,7 @@ struct MapTab: View {
                     }
                 }
                 // 沒有選中位置，則顯示搜尋面板
-                isSheetPresented = selectedLocation == nil
+                isSearching = false
                 printPlacemarkInfo()
             }
             .onChange(of: searchResults) {
@@ -123,7 +121,7 @@ struct MapTab: View {
                     selectedLocation = firstResult
                 }
             }
-            .sheet(isPresented: $isSheetPresented) {
+            .sheet(isPresented: $isSearching) {
                 SearchSheetView(
                     query: $query,
                     isSearching: $isSearching,
@@ -132,6 +130,16 @@ struct MapTab: View {
                 )
             }
             .mapItemDetailSheet(item: selectedMapItemBinding)
+            
+            VStack {
+                SearchBarView(searchText: $query, isSearching: $isSearching)
+                    .onTapGesture {
+                        isSearching = true
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                Spacer()
+            }
         }
     }
     
