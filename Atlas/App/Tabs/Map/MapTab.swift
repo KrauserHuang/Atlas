@@ -101,10 +101,16 @@ struct MapTab: View {
 //                        .padding(.horizontal, 20)
 //                }
 //            }
-            .onChange(of: selectedLocation) {
-                if let selectedLocation {
+            .onChange(of: selectedLocation) { _, newSelection in
+                if let selected = newSelection {
+                    let coord = selected.mapItem.placemark.coordinate
+                    
+                    withAnimation {
+                        position = .region(MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+                    }
+                    
                     Task {
-                        scene = try? await fetchScene(for: selectedLocation.location)
+                        scene = try? await fetchScene(for: coord)
                     }
                 }
                 // 沒有選中位置，則顯示搜尋面板
@@ -117,7 +123,12 @@ struct MapTab: View {
                 }
             }
             .sheet(isPresented: $isSheetPresented) {
-                SearchSheetView(query: $query, isSearching: $isSearching, searchResults: $searchResults)
+                SearchSheetView(
+                    query: $query,
+                    isSearching: $isSearching,
+                    searchResults: $searchResults,
+                    selectedLocation: $selectedLocation
+                )
             }
             .mapItemDetailSheet(item: selectedMapItemBinding)
         }

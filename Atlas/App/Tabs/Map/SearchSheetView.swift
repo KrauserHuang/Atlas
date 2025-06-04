@@ -12,6 +12,7 @@ struct SearchSheetView: View {
     @Binding var query: String
     @Binding var isSearching: Bool
     @Binding var searchResults: [SearchResult]
+    @Binding var selectedLocation: SearchResult?
     
     private let locationManager = LocationManager.shared
     
@@ -85,8 +86,20 @@ struct SearchSheetView: View {
     /// - Parameter completion: 被點擊的搜尋建議項目
     private func didTapOnCompletion(_ completion: SearchCompletion) {
         Task {
-            if let singleLocation = try? await locationManager.searchFromCompletion(completion) {
-                searchResults = singleLocation
+            do {
+                let singleResults = try await locationManager.searchFromCompletion(completion)
+                if let first = singleResults.first {
+                    await MainActor.run {
+                        selectedLocation = first
+                    }
+                }
+                
+                await MainActor.run {
+                    searchResults = singleResults
+                }
+                
+            } catch {
+                print("SearchFromCompletion 失敗：\(error)")
             }
         }
     }
