@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import SwiftUICore
 import SwiftUI
 
 @MainActor
@@ -31,11 +30,11 @@ enum AppTab: Int, Identifiable, Hashable, CaseIterable, Codable {
     func makeContentView(selectedTab: Binding<AppTab>) -> some View {
         switch self {
         case .map:
-            MapView()
+            MapTab()
         case .list:
-            ListView()
+            ListTab()
         case .profile:
-            ProfileView()
+            ProfileTab()
         }
     }
     
