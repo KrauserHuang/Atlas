@@ -17,13 +17,13 @@ struct AuthenticationView: View {
             LoginView()
                 .environmentObject(viewModel)
         case .signUp:
-            LoginView()
+            SignupView()
                 .environmentObject(viewModel)
         }
     }
 }
 
-//#Preview {
-//    AuthenticationView()
-//        .environmentObject(AuthenticationViewModel())
-//}
+#Preview {
+    AuthenticationView()
+        .environmentObject(AuthenticationViewModel())
+}

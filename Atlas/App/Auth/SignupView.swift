@@ -1,23 +1,25 @@
 //
-//  LoginView.swift
+//  SignupView.swift
 //  Atlas
 //
-//  Created by Tai Chin Huang on 2025/4/5.
+//  Created by Tai Chin Huang on 2025/7/12.
 //
 
 import SwiftUI
 
-// MARK: - Login View
-struct LoginView: View {
+// MARK: - Signup View
+struct SignupView: View {
     @EnvironmentObject private var viewModel: AuthenticationViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     
     @FocusState private var focusedField: Field?
     @State private var isPasswordVisible = false
+    @State private var isConfirmPasswordVisible = false
+    @State private var agreedToTerms = false
     
     private enum Field: Hashable {
-        case email, password
+        case email, password, confirmPassword
     }
     
     var body: some View {
@@ -30,8 +32,9 @@ struct LoginView: View {
                 VStack(spacing: 16) {
                     emailField
                     passwordField
-                    forgotPasswordButton
-                    signInButton
+                    confirmPasswordField
+                    termsAgreementSection
+                    signUpButton
                     
                     // Error message display
                     if !viewModel.errorMessage.isEmpty {
@@ -45,8 +48,8 @@ struct LoginView: View {
                 // Social Login
                 socialLoginSection
                 
-                // Navigate to Signup
-                navigationToSignup
+                // Navigate to Login
+                navigationToLogin
             }
             .padding()
         }
@@ -67,14 +70,14 @@ struct LoginView: View {
 }
 
 // MARK: - View Components
-extension LoginView {
+extension SignupView {
     private var headerSection: some View {
         VStack(spacing: 8) {
-            Text("Welcome Back! 👋")
+            Text("Create Account 🚀")
                 .font(.largeTitle.bold())
                 .frame(maxWidth: .infinity, alignment: .leading)
             
-            Text("Sign in to continue exploring amazing food near you")
+            Text("Join us to discover amazing food experiences near you")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -110,6 +113,13 @@ extension LoginView {
                     .fill(Color(.systemBackground))
                     .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
+            
+            // Email validation feedback
+            if !viewModel.email.isEmpty && !isValidEmail(viewModel.email) {
+                Text("Please enter a valid email address")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
         }
     }
     
@@ -123,7 +133,6 @@ extension LoginView {
                 Image(systemName: "lock")
                     .foregroundStyle(.secondary)
                 
-                // 使用 ZStack 避免切換時的抖動
                 ZStack {
                     SecureField("Enter your password", text: $viewModel.password)
                         .opacity(isPasswordVisible ? 0 : 1)
@@ -131,6 +140,10 @@ extension LoginView {
                     TextField("Enter your password", text: $viewModel.password)
                         .opacity(isPasswordVisible ? 1 : 0)
                 }
+                .textContentType(.newPassword)
+                .focused($focusedField, equals: .password)
+                .submitLabel(.next)
+                .onSubmit { focusedField = .confirmPassword }
                 
                 Button(action: {
                     isPasswordVisible.toggle()
@@ -145,38 +158,131 @@ extension LoginView {
                     .fill(Color(.systemBackground))
                     .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
+            
+            // Password strength indicator
+            if !viewModel.password.isEmpty {
+                passwordStrengthIndicator
+            }
         }
     }
     
-    private var forgotPasswordButton: some View {
-        Button(action: forgotPassword) {
-            Text("Forgot Password?")
-                .font(.subheadline)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .foregroundStyle(.blue)
+    private var confirmPasswordField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Confirm Password")
+                .font(.subheadline.bold())
+                .foregroundStyle(.primary)
+            
+            HStack {
+                Image(systemName: "lock.fill")
+                    .foregroundStyle(.secondary)
+                
+                ZStack {
+                    SecureField("Confirm your password", text: $viewModel.confirmPassword)
+                        .opacity(isConfirmPasswordVisible ? 0 : 1)
+                    
+                    TextField("Confirm your password", text: $viewModel.confirmPassword)
+                        .opacity(isConfirmPasswordVisible ? 1 : 0)
+                }
+                .textContentType(.newPassword)
+                .focused($focusedField, equals: .confirmPassword)
+                .submitLabel(.done)
+                .onSubmit { focusedField = nil }
+                
+                Button(action: {
+                    isConfirmPasswordVisible.toggle()
+                }) {
+                    Image(systemName: isConfirmPasswordVisible ? "eye.slash" : "eye")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+            )
+            
+            // Password match validation
+            if !viewModel.confirmPassword.isEmpty && !passwordsMatch {
+                Text("Passwords do not match")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
         }
     }
     
-    private var signInButton: some View {
-        Button(action: signInWithEmailPassword) {
+    private var passwordStrengthIndicator: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("Password Strength:")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                Text(passwordStrength.rawValue)
+                    .font(.caption.bold())
+                    .foregroundStyle(passwordStrength.color)
+            }
+            
+            ProgressView(value: passwordStrength.progress, total: 1.0)
+                .progressViewStyle(LinearProgressViewStyle(tint: passwordStrength.color))
+                .frame(height: 4)
+        }
+    }
+    
+    private var termsAgreementSection: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Button(action: {
+                agreedToTerms.toggle()
+            }) {
+                Image(systemName: agreedToTerms ? "checkmark.square.fill" : "square")
+                    .foregroundStyle(agreedToTerms ? .blue : .secondary)
+                    .font(.title2)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("I agree to the Terms of Service and Privacy Policy")
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+                
+                HStack(spacing: 16) {
+                    Button("Terms of Service") {
+                        // TODO: Show terms of service
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.blue)
+                    
+                    Button("Privacy Policy") {
+                        // TODO: Show privacy policy
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.blue)
+                }
+            }
+            
+            Spacer()
+        }
+    }
+    
+    private var signUpButton: some View {
+        Button(action: signUpWithEmailPassword) {
             HStack {
                 if viewModel.authenticationState == .authenticating {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
-                    Text("Sign In")
+                    Text("Create Account")
                         .font(.headline)
                 }
             }
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            .background(Color.blue)
+            .background(isSignUpButtonEnabled ? Color.blue : Color.gray.opacity(0.6))
             .foregroundStyle(.white)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
+            .shadow(color: isSignUpButtonEnabled ? .blue.opacity(0.3) : .clear, radius: 10, x: 0, y: 5)
         }
         .padding(.top, 8)
-        .disabled(!viewModel.isValid)
+        .disabled(!isSignUpButtonEnabled)
     }
     
     private var dividerView: some View {
@@ -198,7 +304,7 @@ extension LoginView {
     private var socialLoginSection: some View {
         VStack(spacing: 12) {
             // Google Button
-            Button(action: signInWithGoogle) {
+            Button(action: signUpWithGoogle) {
                 HStack {
                     Image(.googlelogo)
                         .resizable()
@@ -220,7 +326,7 @@ extension LoginView {
             }
             
             // Apple Button
-            Button(action: signInWithApple) {
+            Button(action: signUpWithApple) {
                 HStack {
                     Image(systemName: "applelogo")
                         .resizable()
@@ -244,13 +350,13 @@ extension LoginView {
         }
     }
     
-    private var navigationToSignup: some View {
+    private var navigationToLogin: some View {
         HStack {
-            Text("Don't have an account?")
+            Text("Already have an account?")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             
-            Button("Sign Up") {
+            Button("Sign In") {
                 viewModel.switchFlow()
             }
             .font(.subheadline.bold())
@@ -279,22 +385,67 @@ extension LoginView {
     }
 }
 
-// MARK: - Actions
-extension LoginView {
-    private func forgotPassword() {
-        // TODO: Implement forgot password flow
-        print("Forgot password tapped")
+// MARK: - Helper Properties
+extension SignupView {
+    private var isSignUpButtonEnabled: Bool {
+        !viewModel.email.isEmpty &&
+        !viewModel.password.isEmpty &&
+        !viewModel.confirmPassword.isEmpty &&
+        isValidEmail(viewModel.email) &&
+        passwordsMatch &&
+        passwordStrength != .weak &&
+        agreedToTerms &&
+        viewModel.authenticationState != .authenticating
     }
     
-    private func signInWithEmailPassword() {
+    private var passwordsMatch: Bool {
+        viewModel.password == viewModel.confirmPassword
+    }
+    
+    private var passwordStrength: PasswordStrength {
+        getPasswordStrength(viewModel.password)
+    }
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
+    }
+    
+    private func getPasswordStrength(_ password: String) -> PasswordStrength {
+        let length = password.count
+        let hasUppercase = password.range(of: "[A-Z]", options: .regularExpression) != nil
+        let hasLowercase = password.range(of: "[a-z]", options: .regularExpression) != nil
+        let hasNumbers = password.range(of: "[0-9]", options: .regularExpression) != nil
+        let hasSpecialChars = password.range(of: "[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\\"|,.<>\\/?]", options: .regularExpression) != nil
+        
+        var score = 0
+        if length >= 8 { score += 1 }
+        if hasUppercase { score += 1 }
+        if hasLowercase { score += 1 }
+        if hasNumbers { score += 1 }
+        if hasSpecialChars { score += 1 }
+        
+        switch score {
+        case 0...2: return .weak
+        case 3...4: return .medium
+        case 5: return .strong
+        default: return .weak
+        }
+    }
+}
+
+// MARK: - Actions
+extension SignupView {
+    private func signUpWithEmailPassword() {
         guard viewModel.authenticationState != .authenticating else { return }
         
         Task {
-            await viewModel.signInWithEmailPassword()
+            await viewModel.signUpWithEmailPassword()
         }
     }
     
-    private func signInWithGoogle() {
+    private func signUpWithGoogle() {
         guard viewModel.authenticationState != .authenticating else { return }
         
         Task {
@@ -302,7 +453,7 @@ extension LoginView {
         }
     }
     
-    private func signInWithApple() {
+    private func signUpWithApple() {
         guard viewModel.authenticationState != .authenticating else { return }
         
         Task {
@@ -311,15 +462,16 @@ extension LoginView {
     }
 }
 
+
 // MARK: - Preview
 #Preview {
-    LoginView()
+    SignupView()
         .environmentObject(AuthenticationViewModel())
         .preferredColorScheme(.light)
 }
 
 #Preview {
-    LoginView()
+    SignupView()
         .environmentObject(AuthenticationViewModel())
         .preferredColorScheme(.dark)
 }

@@ -30,10 +30,13 @@ Atlas is a SwiftUI-based iOS app with Firebase authentication and location servi
 ### Key Components
 
 **Authentication Flow**
-- Uses Firebase Authentication with email/password
+- Uses Firebase Authentication with email/password and third-party providers
 - `AuthenticationViewModel` manages auth state with reactive properties
+- Complete signup/login flow with `SignupView` and `LoginView`
+- Supports Google Sign-In and Apple Sign-In (setup required)
+- Email validation, password strength checking, and form validation
 - `AuthenticatedView` wraps the main app content
-- Currently the authentication UI is commented out in `AtlasApp.swift:27-37`
+- Authentication UI is now active in `AtlasApp.swift`
 
 **Tab-Based Navigation**
 - `AppTab` enum defines three tabs: map, list, profile
@@ -85,3 +88,8 @@ Atlas/
 - Development team ID: 6U2TAM5353
 - Bundle identifier: com.krauserhuang.Atlas
 - Comments in code are written in Traditional Chinese
+
+### Third-Party Authentication Setup
+- **Google Sign-In**: Requires GoogleSignIn SDK and setup instructions in `GoogleSignIn-Setup-Instructions.md`
+- **Apple Sign-In**: Requires enabling Sign In with Apple capability, setup instructions in `AppleSignIn-Setup-Instructions.md`
+- Both integrations are prepared but require additional setup steps to be fully functional
