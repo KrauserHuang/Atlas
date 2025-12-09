@@ -19,28 +19,30 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 struct AtlasApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
 //    @StateObject var authViewModel = AuthenticationViewModel()
-    @State var selectedTab: AppTab = .map
-    
+    @State var searchText: String = ""
+
     var body: some Scene {
         WindowGroup {
-            TabView(selection: $selectedTab) {
-                ForEach(AppTab.allCases) { tab in
-                    tab.makeContentView(selectedTab: $selectedTab)
-                        .tabItem {
-                            tab.label
-                        }
-                        .tag(tab)
+            TabView {
+                Tab("Map", systemImage: "map") {
+                    MapTab()
+                }
+                
+                Tab("List", systemImage: "list.bullet") {
+                    ListTab()
+                }
+                
+                Tab("Profile", systemImage: "person") {
+                    ProfileTab()
+                }
+                
+                Tab(role: .search) {
+                    NavigationStack {
+                        SearchTab(searchText: $searchText)
+                    }
+                    .searchable(text: $searchText, prompt: "Search locations")
                 }
             }
-//            TabView {
-//                MapView()
-//                ListView()
-//                ProfileView()
-//                AuthenticatedView {
-//                    Text("HI")
-//                }
-//                .environmentObject(authViewM odel)
-//            }
             .onAppear {
                 // Make tab bar non-transparent
                 let appearance = UITabBarAppearance()
