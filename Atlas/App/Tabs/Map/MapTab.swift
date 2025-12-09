@@ -101,7 +101,7 @@ struct MapTab: View {
 //            }
             .onChange(of: selectedLocation) { _, newSelection in
                 if let selected = newSelection {
-                    let coord = selected.mapItem.placemark.coordinate
+                    let coord = selected.mapItem.location.coordinate
                     
                     withAnimation {
                         position = .region(MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
@@ -152,31 +152,29 @@ struct MapTab: View {
     }
     
     private func printPlacemarkInfo() {
-        guard let placemark = selectedLocation?.mapItem.placemark else { return }
-        
-        // Print all available placemark information
-        print("=== Placemark Information ===")
-        print("Name: \(placemark.name ?? "N/A")")
-        print("Title: \(placemark.title ?? "N/A")")
-        print("Thoroughfare (Street): \(placemark.thoroughfare ?? "N/A")")
-        print("SubThoroughfare (Street Number): \(placemark.subThoroughfare ?? "N/A")")
-        print("Locality (City): \(placemark.locality ?? "N/A")")
-        print("SubLocality: \(placemark.subLocality ?? "N/A")")
-        print("Administrative Area (State): \(placemark.administrativeArea ?? "N/A")")
-        print("SubAdministrative Area: \(placemark.subAdministrativeArea ?? "N/A")")
-        print("Postal Code: \(placemark.postalCode ?? "N/A")")
-        print("Country: \(placemark.country ?? "N/A")")
-        print("ISO Country Code: \(placemark.isoCountryCode ?? "N/A")")
-        print("Location: \(placemark.location?.coordinate.latitude ?? 0), \(placemark.location?.coordinate.longitude ?? 0)")
-        
-        // Print MKMapItem specific information
-        print("\n=== MapItem Information ===")
-        print("Phone Number: \(selectedLocation?.mapItem.phoneNumber ?? "N/A")")
-        print("URL: \(selectedLocation?.mapItem.url?.absoluteString ?? "N/A")")
-        print("Point of Interest Category: \(selectedLocation?.mapItem.pointOfInterestCategory?.rawValue ?? "N/A")")
-        //        if let hours = selectedItem?.openingHours {
-        //            print("Opening Hours: \(hours)")
-        //        }
+        guard let mapItem = selectedLocation?.mapItem else { return }
+
+        // Print location information using iOS 18+ modern MapKit API
+        print("=== Location Information ===")
+        print("Name: \(mapItem.name ?? "N/A")")
+
+        // Use modern MKAddress API instead of deprecated MKPlacemark
+        if let address = mapItem.address {
+            print("Full Address: \(address.fullAddress)")
+        } else {
+            print("Full Address: N/A")
+        }
+
+        // Print coordinates
+        let coordinate = mapItem.location.coordinate
+        print("Latitude: \(coordinate.latitude)")
+        print("Longitude: \(coordinate.longitude)")
+
+        // Print additional MapItem information
+        print("\n=== Additional Information ===")
+        print("Phone Number: \(mapItem.phoneNumber ?? "N/A")")
+        print("URL: \(mapItem.url?.absoluteString ?? "N/A")")
+        print("Point of Interest Category: \(mapItem.pointOfInterestCategory?.rawValue ?? "N/A")")
     }
 }
 

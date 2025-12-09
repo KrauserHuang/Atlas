@@ -48,7 +48,7 @@ struct SearchResult: Identifiable, Hashable {
     let mapItem: MKMapItem
     
     var location: CLLocationCoordinate2D {
-        return mapItem.placemark.coordinate
+        return mapItem.location.coordinate
     }
     
     var name: String {
@@ -156,15 +156,15 @@ final class LocationManager: NSObject {
         
         // Set source
         if let fromLocation = from {
-            request.source = MKMapItem(placemark: MKPlacemark(coordinate: fromLocation))
+            request.source = MKMapItem(location: CLLocation(latitude: fromLocation.latitude, longitude: fromLocation.longitude), address: nil)
         } else if let currentLocation = location {
-            request.source = MKMapItem(placemark: MKPlacemark(coordinate: currentLocation))
+            request.source = MKMapItem(location: CLLocation(latitude: currentLocation.latitude, longitude: currentLocation.longitude), address: nil)
         } else {
             request.source = MKMapItem.forCurrentLocation()
         }
         
         // Set destination
-        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: to))
+        request.destination = MKMapItem(location: CLLocation(latitude: to.latitude, longitude: to.longitude), address: nil)
         request.transportType = .automobile
         
         let directions = MKDirections(request: request)
