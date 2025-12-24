@@ -43,25 +43,14 @@ struct SearchCompletion: Identifiable {
 }
 
 /// 搜尋結果的model
-struct SearchResult: Identifiable, Hashable {
+struct Place: Identifiable, Hashable {
     let id = UUID()
     let mapItem: MKMapItem
     
-    var location: CLLocationCoordinate2D {
-        return mapItem.location.coordinate
-    }
-    
-    var name: String {
-        return mapItem.name ?? ""
-    }
-    
-    static func == (lhs: SearchResult, rhs: SearchResult) -> Bool {
-        lhs.id == rhs.id
-    }
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
+    var name: String { mapItem.name ?? "Unknown" }
+    var coordinate: CLLocationCoordinate2D { mapItem.location.coordinate }
+    var address: String { mapItem.address?.fullAddress ?? "" }
+    var phoneNumber: String? { mapItem.phoneNumber }
 }
 
 /// This macro adds observation support to a custom type and conforms the type to the `Observable` protocol.
@@ -77,9 +66,12 @@ final class LocationManager: NSObject {
     var location: CLLocationCoordinate2D? = nil
     var name: String = ""
     var error: LocationError? = nil
-    
+    // Search Properties
     var query: String = ""
-    var searchResults: [SearchResult] = []
+    var searchResults: [Place] = []
+    var selectedResult: Place?
+    var showSearchResults: Bool = false
+    var isSearching: Bool = false
     var completions: [SearchCompletion] = []
     let searchCompleter = MKLocalSearchCompleter()
     
@@ -98,7 +90,7 @@ final class LocationManager: NSObject {
     ///   - query: 搜尋的字串
     ///   - useCurrentLocation: 是否依目前位置當作座標中心進行搜尋
     /// - Returns: 回傳搜尋結果
-    func performSearch(with query: String, useCurrentLocation: Bool = true) async throws -> [SearchResult] {
+    func performSearch(with query: String, useCurrentLocation: Bool = true) async throws -> [Place] {
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
         request.resultTypes = .pointOfInterest
@@ -117,7 +109,7 @@ final class LocationManager: NSObject {
         let search = MKLocalSearch(request: request)
         let response = try await search.start()
         
-        let results = response.mapItems.map { SearchResult(mapItem: $0) }
+        let results = response.mapItems.map { Place(mapItem: $0) }
         
         await MainActor.run {
             self.searchResults = results
@@ -135,7 +127,7 @@ final class LocationManager: NSObject {
         }
     }
     
-    func searchFromCompletion(_ completion: SearchCompletion) async throws -> [SearchResult] {
+    func searchFromCompletion(_ completion: SearchCompletion) async throws -> [Place] {
         return try await performSearch(with: completion.title)
     }
     
@@ -251,9 +243,18 @@ extension LocationManager: MKLocalSearchCompleterDelegate {
                 url: mapItem?.url
             )
         }
+        
+        searchResults = completer.results.compactMap { completion in
+            let mapItem = completion.value(forKey: "_mapItem") as? MKMapItem
+            if let mapItem {
+                return Place(mapItem: mapItem)
+            }
+            return nil
+        }
     }
     
     func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: any Error) {
         print("Search completer failed: \(error.localizedDescription)")
     }
 }
+

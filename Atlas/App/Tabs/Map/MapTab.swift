@@ -32,8 +32,8 @@ struct MapTab: View {
     @State private var query: String = ""
     @State private var isSearching: Bool = false
     // 搜尋結果，SearchResult
-    @State private var searchResults: [SearchResult] = []
-    @State private var selectedLocation: SearchResult?
+    @State private var searchResults: [Place] = []
+    @State private var selectedLocation: Place?
     // 街景場景
     @State private var scene: MKLookAroundScene?
     // 地圖範圍命名空間，用於控制地圖相關的 UI 元件

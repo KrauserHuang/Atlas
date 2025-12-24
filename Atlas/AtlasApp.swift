@@ -43,6 +43,7 @@ struct AtlasApp: App {
                     .searchable(text: $searchText, prompt: "Search locations")
                 }
             }
+            .tabBarMinimizeBehavior(.onScrollDown)
             .onAppear {
                 // Make tab bar non-transparent
                 let appearance = UITabBarAppearance()

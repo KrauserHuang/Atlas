@@ -11,8 +11,8 @@ import SwiftUI
 struct SearchSheetView: View {
     @Binding var query: String
     @Binding var isSearching: Bool
-    @Binding var searchResults: [SearchResult]
-    @Binding var selectedLocation: SearchResult?
+    @Binding var searchResults: [Place]
+    @Binding var selectedLocation: Place?
     
     private let locationManager = LocationManager.shared
     
@@ -34,41 +34,48 @@ struct SearchSheetView: View {
             
             Spacer()
             
-            List {
-                ForEach(locationManager.completions) { completion in
-                    Button(action: { didTapOnCompletion(completion) }) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(completion.title)
-                                .font(.headline)
-                                .foregroundStyle(.primary)
-                                .fontDesign(.rounded)
-                            
-                            Text(completion.subTitle)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                            
-                            if let url = completion.url {
-                                Link(destination: url) {
-                                    HStack {
-                                        Image(systemName: "link")
-                                        Text(url.absoluteString)
-                                    }
-                                    .font(.caption)
-                                    .lineLimit(1)
-                                    .foregroundStyle(.blue)
-                                }
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .contentShape(Rectangle())
+            ScrollView(.vertical) {
+                LazyVStack(spacing: 15) {
+                    ForEach(locationManager.searchResults, id: \.self) { place in
+                        SearchResultCardView(place)
                     }
-                    .buttonStyle(.plain)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)   // 隱藏列表背景
+//            List {
+//                ForEach(locationManager.completions) { completion in
+//                    Button(action: { didTapOnCompletion(completion) }) {
+//                        VStack(alignment: .leading, spacing: 4) {
+//                            Text(completion.title)
+//                                .font(.headline)
+//                                .foregroundStyle(.primary)
+//                                .fontDesign(.rounded)
+//                            
+//                            Text(completion.subTitle)
+//                                .font(.subheadline)
+//                                .foregroundStyle(.secondary)
+//                            
+//                            if let url = completion.url {
+//                                Link(destination: url) {
+//                                    HStack {
+//                                        Image(systemName: "link")
+//                                        Text(url.absoluteString)
+//                                    }
+//                                    .font(.caption)
+//                                    .lineLimit(1)
+//                                    .foregroundStyle(.blue)
+//                                }
+//                            }
+//                        }
+//                        .frame(maxWidth: .infinity, alignment: .leading)
+//                        .contentShape(Rectangle())
+//                    }
+//                    .buttonStyle(.plain)
+//                    .listRowBackground(Color.clear)
+//                    .listRowSeparator(.hidden)
+//                }
+//            }
+//            .listStyle(.plain)
+//            .scrollContentBackground(.hidden)   // 隱藏列表背景
         }
         .onChange(of: query) { _, newQuery in
             // 當搜尋文字 query 改變，觸發自動更新建議
@@ -102,6 +109,28 @@ struct SearchSheetView: View {
                 print("SearchFromCompletion 失敗：\(error)")
             }
         }
+    }
+    
+    @ViewBuilder
+    func SearchResultCardView(_ result: Place) -> some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(result.name)
+                    
+                    Text(result.address)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer(minLength: 0)
+                
+                
+            }
+            
+            Divider()
+        }
+        .contentShape(.rect)
     }
 }
 

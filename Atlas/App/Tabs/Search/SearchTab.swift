@@ -12,8 +12,8 @@ struct SearchTab: View {
 
     @Binding var searchText: String
     @State private var locationManager = LocationManager.shared
-    @State private var searchResults: [SearchResult] = []
-    @State private var selectedLocation: SearchResult?
+    @State private var searchResults: [Place] = []
+    @State private var selectedLocation: Place?
 
     var body: some View {
         VStack {
@@ -111,7 +111,7 @@ struct SearchTab: View {
 }
 
 struct LocationDetailView: View {
-    let searchResult: SearchResult
+    let searchResult: Place
 
     @Environment(\.dismiss) var dismiss
 
